@@ -74,10 +74,25 @@ export default function Home() {
             
         return matCopy           
     }
-    function distManhattan(){
-        
+    function sumManhattan(mat1, mat2){//mat1 = matriz atual, mat2 = matriz de estado possivel
+        var sum = 0
+        var found
+        let r,c,x,y
+        for(r=0; r<mat1.length; r++)
+            for(c=0; c<mat1[0].length; c++){
+                found = false
+                for(x=0; x<mat2.length && !found; x++)
+                    for(y=0; y<mat2[0].length && !found; y++)
+                        if(mat1[r][c]==mat2[x][y])
+                            found = true
+                sum = sum + Math.abs(x-r) + Math.abs(y-c)
+            }
     }
     function AStar(){
+        var aux, xy, nb
+        //tem que criar tipo uma lista encadeada
+        //uma classe (sei q não vai ser classe mesmo) que tem um matriz (atual) e uma lista dessa mesma classe(pra guardar as possiveis matrizes seguintes)
+        var mat=[[[]]]
         var matrix = [
             [1,2,3],
             [4,0,5],
@@ -85,9 +100,17 @@ export default function Home() {
         ];
         setMatEnd(copyMat(matrix))
         shuffle(matrix)
-        
-        
-        var xy = posEmpty(matStart)
+
+
+        xy = posEmpty(matStart)
+        nb = neighbors(xy[0],xy[1])
+        //definindo possibilidades
+        /*for(let i=0; i<nb.length; i+=2){
+            mat.push(matCopy(matStart))
+            aux = matStart[xy[0]][xy[1]] 
+        }
+        mat.push([[1,2,3],[10,11,12]])
+        console.log(mat)*/
     }
 
     function bestFirst() {
