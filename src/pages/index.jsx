@@ -22,7 +22,7 @@ export default function Home() {
 
     function shuffle(rows) {
         const min = 2, max = 8;
-        var rand = parseInt(min + Math.random() * (max - min));
+        var rand = 5//parseInt(min + Math.random() * (max - min));
         var x, y; //coordenas da posição livre
         var found = false
 
@@ -112,7 +112,8 @@ export default function Home() {
         var xy, nb, root, posRoot
         var arrayLeaf = []
         setMatEnd(copyMat(matrix))
-        shuffle(matrix)
+        //shuffle(matrix)
+        setMatStart([[1,2,3],[6,4,5],[7,0,8]])
         var root_ = new Node(matStart);
 
         root = new Node(matStart);
@@ -146,6 +147,8 @@ export default function Home() {
             var pos, cost, lowestCost
 
             if(arrayLeaf.length > 0) {
+                console.log("opcoes")
+                console.log(arrayLeaf)
                 lowestCost = arrayLeaf[0].getFa() + arrayLeaf[0].getFc()
                 pos = 0
                 for (k = 1; k < arrayLeaf.length; k++) {
@@ -157,11 +160,14 @@ export default function Home() {
                 }
                 //filho selecionado
                 root = arrayLeaf[pos]
+                path.push(root)
             }
         }
-        path.push(root)
-        for(let i=0; i<path.length; i++)
+        
+        for(let i=0; i<path.length; i++){
             console.log(path[i].data)
+            console.log(path[i].fa+path[i].fc)
+        }
         console.log("it: "+it)
         console.log("tam de path: "+path.length)
     }
