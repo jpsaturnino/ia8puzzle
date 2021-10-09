@@ -7,21 +7,32 @@ export default function Home() {
     const [option, setOption] = useState('A*');
 
     async function AStar() {
-        const resp = await api.post('/astar', { matEnd });
+        var n = 2
+        console.log(matEnd)
+        setMatEnd([
+            [1,2,3],[4,0,5],[6,7,8]
+        ])
+        console.log(matEnd)
+        const resp = await api.post('/astar', { matEnd,n});
         console.log(resp);
     }
 
+
     async function HillClimbing() {
+        setMatEnd([
+            [1,2,3],[4,0,5],[6,7,8]
+        ])
         const resp = await api.post('/hillclimbing', { matEnd });
         console.log(resp);
     }
 
     const handle = () => {
-        if (option != 'A*')
+        if (option == 'A*')
             AStar()
         else
             HillClimbing()
     }
+
 
     return (
         <div classsName='container'>

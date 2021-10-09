@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "proj": "node index.js",
     "start": "node app.js"
   },
   "dependencies": {
