@@ -11,6 +11,10 @@ class Node {
     return this.father;
   }
 
+  setFather(father) {
+    return this.father = father;
+  }
+
   getFc() {
     return this.fc;
   }

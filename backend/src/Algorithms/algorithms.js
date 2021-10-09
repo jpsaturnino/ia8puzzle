@@ -16,7 +16,6 @@ module.exports = {
         root.setFc(0);
         path.push(root);
         arrayLeaf.push(root);
-        var it=0
         while (!equalsMat(root.getData(), matEnd)) {
             xy = posEmpty(root.getData());
             nb = neighbors(xy[0], xy[1]);
@@ -36,13 +35,6 @@ module.exports = {
                 //remove 1 elemento a partir do índice posRoot
                 arrayLeaf.splice(posRoot, 1);
             }
-            if (n==2 && it%2==0){
-                arrayAux = []
-                for (let i = 0; i < arrayLeaf.length; i++)
-                    findChild(arrayLeaf[i],matEnd,arrayAux)
-                arrayLeaf = arrayAux
-            }
-
             //selecionar filho de menor custo
             let k;
             var pos, cost, lowestCost;
@@ -58,6 +50,70 @@ module.exports = {
                 }
                 //filho selecionado
                 root = arrayLeaf[pos];
+                path.push(root);
+            }
+        }
+        show(root_);
+        return response.json(root_)
+    },
+
+    async AStar_Jump(request, response) {
+        const { matEnd, n } = request.body;
+        console.log(matEnd)
+        var path = [];
+        var matTemp;
+        var xy, nb, root, posRoot;
+        var arrayLeaf = [], arrayAux = [];
+
+        //const matStart = shuffle(copyMat(matEnd));
+        matStart = [[1,2,3],[4,7,0],[6,8,5]]
+        root = new Node(matStart);
+        var root_ = root;
+        root.setFa(sumManhattan(root.getData(), matEnd));
+        root.setFc(0);
+        path.push(root);
+        arrayLeaf.push(root);
+        var it=0
+        while (!equalsMat(root.getData(), matEnd) && it<1 ){
+            
+            //definir os possiveis estados seguintes para todas as folhas
+            for (let k=0; k<arrayLeaf.length; k++){
+                xy = posEmpty(arrayLeaf[k].getData());
+                nb = neighbors(xy[0], xy[1]);
+                for (let i = 0; i < nb.length; i += 2) {
+                    matTemp = new Node(copyMat(arrayLeaf[k].getData()));
+                    matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]];
+                    matTemp.getData()[nb[i]][nb[i + 1]] = 0;
+                    matTemp.setFa(sumManhattan(matTemp.getData(), matEnd));
+                    matTemp.setFc(arrayLeaf[k].getFc() + 2);
+                    matTemp.setFather(arrayLeaf[k])
+                    arrayLeaf[k].getChild().push(matTemp);
+                    arrayAux.push(matTemp);
+                }
+            }
+            if (arrayAux.length > 0) {
+                arrayLeaf = []
+                arrayLeaf = arrayAux
+            }
+            arrayAux = []
+            for (let i = 0; i < arrayLeaf.length; i++)
+                findChild(arrayLeaf[i],matEnd,arrayAux)
+            arrayLeaf = arrayAux
+            //selecionar filho de menor custo
+            let k;
+            var pos, cost, lowestCost;
+            if (arrayLeaf.length > 0) {
+                lowestCost = arrayLeaf[0].getFa() + arrayLeaf[0].getFc();
+                pos = 0;
+                for (k = 1; k < arrayLeaf.length; k++) {
+                    cost = arrayLeaf[k].getFa() + arrayLeaf[k].getFc();
+                    if (cost < lowestCost) {
+                        lowestCost = cost;
+                        pos = k;
+                    }
+                }
+                //filho selecionado
+                root = arrayLeaf[pos].getFather();
                 path.push(root);
             }
             it++
@@ -214,6 +270,7 @@ function findChild(matrix,matEnd,arrayAux){
         matTemp.getData()[nb[i]][nb[i + 1]] = 0;
         matTemp.setFa(sumManhattan(matTemp.getData(), matEnd));
         matTemp.setFc(matrix.getFc() + 2);
+        matTemp.setFather(matrix)
         matrix.getChild().push(matTemp);
         arrayAux.push(matTemp);
     }
