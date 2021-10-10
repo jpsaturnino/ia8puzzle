@@ -1,15 +1,17 @@
 const Node = require('../Classes/Node');
+var str = '{';
 
 module.exports = {
     async AStar(request, response) {
         const { matEnd, n } = request.body;
+        console.log("aqui" + matEnd);
         var path = [];
         var matTemp;
         var xy, nb, root, posRoot;
         var arrayLeaf = [], arrayAux;
 
         //const matStart = shuffle(copyMat(matEnd));
-        matStart = [[1,2,3],[4,7,0],[6,8,5]]
+        matStart = [[1, 2, 3], [4, 7, 0], [6, 8, 5]]
         root = new Node(matStart);
         var root_ = root;
         root.setFa(sumManhattan(root.getData(), matEnd));
@@ -53,33 +55,36 @@ module.exports = {
                 path.push(root);
             }
         }
-        show(root_);
+        convertToGraph(root_)
         return response.json(root_)
     },
 
+
+
+
     async AStar_Jump(request, response) {
         const { matEnd, n } = request.body;
-        console.log(matEnd)
         var path = [];
         var matTemp;
         var xy, nb, root, posRoot;
-        var arrayLeaf = [], arrayAux = [];
+        var arrayLeaf = [];
 
         //const matStart = shuffle(copyMat(matEnd));
-        matStart = [[1,2,3],[4,7,0],[6,8,5]]
+        matStart = [[1, 2, 3], [4, 7, 0], [6, 8, 5]]
         root = new Node(matStart);
         var root_ = root;
         root.setFa(sumManhattan(root.getData(), matEnd));
         root.setFc(0);
         path.push(root);
         arrayLeaf.push(root);
-        var it=0
-        while (!equalsMat(root.getData(), matEnd) && it<1 ){
-            
+        var it = 0
+        while (!equalsMat(root.getData(), matEnd)) {
+            var arrayAux = []
             //definir os possiveis estados seguintes para todas as folhas
-            for (let k=0; k<arrayLeaf.length; k++){
+            for (let k = 0; k < arrayLeaf.length; k++) {
                 xy = posEmpty(arrayLeaf[k].getData());
                 nb = neighbors(xy[0], xy[1]);
+
                 for (let i = 0; i < nb.length; i += 2) {
                     matTemp = new Node(copyMat(arrayLeaf[k].getData()));
                     matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]];
@@ -92,12 +97,11 @@ module.exports = {
                 }
             }
             if (arrayAux.length > 0) {
-                arrayLeaf = []
-                arrayLeaf = arrayAux
+                arrayLeaf = arrayAux.slice();
             }
             arrayAux = []
             for (let i = 0; i < arrayLeaf.length; i++)
-                findChild(arrayLeaf[i],matEnd,arrayAux)
+                findChild(arrayLeaf[i], matEnd, arrayAux)
             arrayLeaf = arrayAux
             //selecionar filho de menor custo
             let k;
@@ -113,7 +117,10 @@ module.exports = {
                     }
                 }
                 //filho selecionado
-                root = arrayLeaf[pos].getFather();
+                if (equalsMat(arrayLeaf[pos].getData(), matEnd))
+                    root = arrayLeaf[pos]
+                else
+                    root = arrayLeaf[pos].getFather();
                 path.push(root);
             }
             it++
@@ -131,7 +138,7 @@ module.exports = {
         var xy, nb, matTemp;
         var done = false;
         var path = [];
-        
+
         root.setFa(sumManhattan(root.getData(), matEnd))
         path.push(root);
         while (!done && !equalsMat(root.getData(), matEnd)) {
@@ -176,7 +183,7 @@ module.exports = {
         return response.json(root_);
     }
 }
-function show (root) {
+function show(root) {
     var queue = [];
     if (root != null) {
         var aux = root;
@@ -194,6 +201,68 @@ function show (root) {
         }
     }
 }
+function convertToGraph(root) {
+    if (root != null) {
+        str = str + "\"attributes\":{" +
+            "\"row1\": \"" + root.getData()[0] + "\"," +
+            "\"row2\": \"" + root.getData()[1] + "\"," +
+            "\"row3\": \"" + root.getData()[2] + "\""
+            + "}"
+        if (root.getChild().length > 0) {
+            str = str + ",\"children\":["
+            for (let i = 0; i < root.getChild().length; i++) {
+                str = str + "{"
+                convertToGraph(root.getChild()[i]);//1 2 3 4
+                str = str + "}"
+                if (i != root.getChild().length - 1)
+                    str += ","
+            }
+            str += "]"
+            //convertToGraph(root.getChild()[root.getChild().length - 1]);
+        }
+        //str = str + "}"
+
+    }
+    str = str + "}]}"
+    console.log(str);
+}
+/*function convertToGraph(root) {
+    if (root != null) {
+        str = str + "\"attributes\":{" +
+            "\"row1\": \"" + root.getData()[0] + "\"," +
+            "\"row2\": \"" + root.getData()[1] + "\"," +
+            "\"row3\": \"" + root.getData()[2] + "\""
+            + "}"
+        if (root.getChild().length > 0) {
+            str = str + ",\"children\":["
+            for (let i = 0; i < root.getChild().length; i++) {
+                str = str + "{"
+                convertToGraph(root.getChild()[i]);//aqui
+                str = str + "},"
+            }
+            str = str + "],"
+            convertToGraph(root.getChild()[root.getChild().length - 1]);
+        }
+
+    }
+    str = str + "},"
+    console.log(JSON.parse(str));
+}*/
+
+/*{
+    name: '',
+    attributes: {
+      row1: '',
+      row2: '',
+      row3: '',
+      fa: '',
+      fc: ''
+    },
+    children: [
+      {},
+      {},
+    ]
+  }*/
 
 function equalsMat(mat1, mat2) {
     var diff = false;
@@ -202,6 +271,12 @@ function equalsMat(mat1, mat2) {
             if (mat1[i][k] !== mat2[i][k])
                 diff = true;
     return !diff
+}
+function copyVet(vet) {
+    var vetCopy = []
+    for (let i = 0; i < vet.length; i++)
+        vetCopy[i] = vet[i]
+    return vetCopy
 }
 
 function copyMat(mat) {
@@ -260,22 +335,24 @@ function neighbors(x, y) {
         nb.push(x, y - 1)
     return nb;
 }
-function findChild(matrix,matEnd,arrayAux){
-    xy = posEmpty(matrix.getData());
-    nb = neighbors(xy[0], xy[1]);
-    //definir os possiveis estados seguintes 
-    for (let i = 0; i < nb.length; i += 2) {
-        matTemp = new Node(copyMat(matrix.getData()));
-        matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]];
-        matTemp.getData()[nb[i]][nb[i + 1]] = 0;
-        matTemp.setFa(sumManhattan(matTemp.getData(), matEnd));
-        matTemp.setFc(matrix.getFc() + 2);
-        matTemp.setFather(matrix)
-        matrix.getChild().push(matTemp);
-        arrayAux.push(matTemp);
-    }
-    if (nb.length==0)
+function findChild(matrix, matEnd, arrayAux) {
+    var xy = posEmpty(matrix.getData());
+    var nb = neighbors(xy[0], xy[1]);
+    if (equalsMat(matrix.getData(), matEnd))
         arrayAux.push(matrix);
+    else {
+        //definir os possiveis estados seguintes 
+        for (let i = 0; i < nb.length; i += 2) {
+            matTemp = new Node(copyMat(matrix.getData()));
+            matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]];
+            matTemp.getData()[nb[i]][nb[i + 1]] = 0;
+            matTemp.setFa(sumManhattan(matTemp.getData(), matEnd));
+            matTemp.setFc(matrix.getFc() + 2);
+            matTemp.setFather(matrix)
+            matrix.getChild().push(matTemp);
+            arrayAux.push(matTemp);
+        }
+    }
 }
 function shuffle(matrix) {
     const min = 10, max = 20;
@@ -305,6 +382,6 @@ function shuffle(matrix) {
         y = nb[i + 1];
         rand = rand - 1;
     }
-    
+
     return matrix;
 }
