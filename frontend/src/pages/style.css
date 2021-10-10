@@ -14,14 +14,31 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+
 }
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+
+select {
+  color: #efefef;
+  margin-top: 30px;
+  width: 100%;
+  padding: 5%;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid #7a66ec;
+  transition: 100ms;
+  outline: none;
+  background: #111;
+}
+
+select::selection {
+  border-bottom: 2px solid #7a66ec;
+}
+
+select:hover {
+  border-bottom: 2px solid #5949b4;
 }
 .App {
   display: grid;
@@ -55,15 +72,36 @@ h1 {
 .tile:focus {
   background: #5949b4;
 }
-
-.display-linebreak {
-  white-space: pre-line;
-}
-
 button {
-  display: block;
+  margin-top: 15px;
+  width: 100%;
+  color: #efefef;
+  font-weight: bold;
+  background-color: #7a66ec;
+  border: none;
+  border-radius: 4px;
+  padding: 5px;
+  transition: 100ms;
+  cursor: pointer;
+}
+button:hover{
+  background-color: #5949b4;
 }
 table{
   border-color: transparent;
   width: 20px;
+}
+
+.table-info {
+  width: fit-content;
+  padding: 10px;
+  margin: 10px;
+  background-color: rgba(31, 31, 31, 0.685);
+  border-radius: 4px;
+}
+
+p {
+  margin: 1px;
+  font-size: small;
+  font-weight: bold;
 }
