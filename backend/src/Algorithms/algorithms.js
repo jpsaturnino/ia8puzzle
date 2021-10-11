@@ -9,7 +9,6 @@ module.exports = {
     async AStar(request, response) {
         path = []
         const { matEnd } = request.body;
-
         var matTemp;
         var xy, nb, posRoot;
         var arrayLeaf = [], arrayAux;
@@ -121,7 +120,7 @@ module.exports = {
         var xy, nb, posRoot;
         var arrayLeaf = [];
         //const matStart = shuffle(copyMat(matEnd));
-        const matStart = [[1, 0, 2], [3, 4, 5], [6, 7, 8]]
+        matStart = [[1, 0, 2], [3, 4, 5], [6, 7, 8]]
         root = new Node(matStart);
         var root_ = root;
         root.setFa(sumManhattan(root.getData(), matEnd));
@@ -245,6 +244,70 @@ module.exports = {
         str = str + "}"
         response.send(str)
     },
+    async branch_bound(request, response) {
+        path = []
+        const { matEnd } = request.body;
+        var matTemp;
+        var xy, nb, posRoot;
+        var arrayLeaf = [], arrayAux;
+
+        const matStart = shuffle(copyMat(matEnd));
+        root = new Node(matStart);
+        var root_ = root;
+        //root.setFa(sumManhattan(root.getData(), matEnd));
+        root.setFc(0);
+        root.setState('visitado')
+
+        path.push(root);
+        arrayLeaf.push(root);
+        executionTime = Date.now();
+        while (!equalsMat(root.getData(), matEnd)) {
+            xy = posEmpty(root.getData());
+            nb = neighbors(xy[0], xy[1]);
+            //definir os possiveis estados seguintes 
+            for (let i = 0; i < nb.length; i += 2) {
+                matTemp = new Node(copyMat(root.getData()));
+                matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]];
+                matTemp.getData()[nb[i]][nb[i + 1]] = 0;
+                matTemp.setFc(root.getFc() + 2);
+                matTemp.setFather(root)
+                root.getChild().push(matTemp);
+                arrayLeaf.push(matTemp);
+            }
+            if (nb.length > 0) {
+                //remover root da lista de folhas
+                posRoot = arrayLeaf.indexOf(root);
+                //remove 1 elemento a partir do índice posRoot
+                arrayLeaf.splice(posRoot, 1);
+            }
+            //selecionar filho de menor custo
+            let k;
+            var pos, cost, lowestCost;
+            if (arrayLeaf.length > 0) {
+                lowestCost = arrayLeaf[0].getFc();
+                pos = 0;
+                for (k = 1; k < arrayLeaf.length; k++) {
+                    cost = arrayLeaf[k].getFc();
+                    if (cost < lowestCost) {
+                        lowestCost = cost;
+                        pos = k;
+                    }
+                }
+                //filho selecionado
+                root = arrayLeaf[pos];
+                root.setState('visitado')
+                path.push(root);
+            }
+        }
+        executionTime = Date.now() - executionTime;
+        nodesSolution(root)
+        root = root_;
+        str = "{"
+        convertToGraph(root_)
+        str = str + "}"
+        response.send(str)
+    },
+
     async best_first(request, response) {
         path = []
         const { matEnd } = request.body;
@@ -307,7 +370,37 @@ module.exports = {
         convertToGraph(root_)
         str = str + "}"
         response.send(str)
+    },
+}
+function shuffle(matEnd) {
+    const min = 3, max = 8;
+    var rand = parseInt(min + Math.random() * (max - min));
+    var x, y; //coordenas da posição livre
+    var found = false
+    //encontrar posição vazia
+    for (let r = 0; r < matEnd.length && !found; r++) {
+        for (let c = 0; c < matEnd[r].length && !found; c++)
+            if (matEnd[r][c] === 0) {
+                found = true
+                x = r; y = c
+            }
     }
+
+    let i;
+    var nb;
+    //quantidade de movimentos do embaralho        
+    while (rand > 0) {
+        nb = neighbors(x, y); //acha os vizinhos do lugar vazio
+        i = parseInt(Math.random() * (nb.length - 1));
+        if (i % 2 !== 0)
+            i++;
+        matEnd[x][y] = matEnd[nb[i]][nb[i + 1]];
+        matEnd[nb[i]][nb[i + 1]] = 0;
+        x = nb[i];
+        y = nb[i + 1];
+        rand = rand - 1;
+    }
+    return matEnd
 }
 function show(root) {
     var queue = [];
@@ -451,35 +544,4 @@ function findChild(matrix, matEnd, arrayAux) {
             arrayAux.push(matTemp);
         }
     }
-}
-function shuffle(matrix) {
-    const min = 3, max = 8;
-    var rand = parseInt(min + Math.random() * (max - min));
-    var x, y; //coordenas da posição livre
-    var found = false
-    //encontrar posição vazia
-    for (let r = 0; r < matrix.length && !found; r++) {
-        for (let c = 0; c < matrix[r].length && !found; c++)
-            if (matrix[r][c] === 0) {
-                found = true
-                x = r; y = c
-            }
-    }
-
-    let i;
-    var nb;
-    //quantidade de movimentos do embaralho        
-    while (rand > 0) {
-        nb = neighbors(x, y); //acha os vizinhos do lugar vazio
-        i = parseInt(Math.random() * (nb.length - 1));
-        if (i % 2 !== 0)
-            i++;
-        matrix[x][y] = matrix[nb[i]][nb[i + 1]];
-        matrix[nb[i]][nb[i + 1]] = 0;
-        x = nb[i];
-        y = nb[i + 1];
-        rand = rand - 1;
-    }
-
-    return matrix;
 }

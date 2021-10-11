@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { Link } from 'react-router-dom'
 import api from "../services/api"
 import './style.css'
 import Tree from 'react-d3-tree';
@@ -28,7 +29,6 @@ export default function Home() {
         [3, 4, 5],
         [6, 7, 8]
     ])
-
     const [option, setOption] = useState('A*');
     const [tree, setTree] = useState(null);
     const [treeSolution, setTreeSolution] = useState(null);
@@ -77,7 +77,6 @@ export default function Home() {
             "Tamanho do caminho total: " + pl.data,
             "Tamanho do caminho da solução:" + pls.data
         ])
-        console.log(arr)
         setReport(arr);
     }
 
@@ -93,12 +92,26 @@ export default function Home() {
 
     async function HillClimbing() {
         const resp = await api.post('/hillclimbing', { matEnd });
-        setTreeInfo(resp.data, "HillClimbimg");
+        setTreeInfo(resp.data, "Hill Climbimg");
+    }
+
+    async function BestFirst() {
+        const resp = await api.post('/bestfirst', { matEnd })
+        setTreeInfo(resp.data, "Best First")
+    }
+
+    async function BranchAndBound() {
+        const resp = await api.post('/branchbound', { matEnd })
+        setTreeInfo(resp.data, "Branch and Bound")
     }
 
     const handle = () => {
         if (option === 'A*')
             selectAStarMode();
+        else if (option === 'BestFirst')
+            BestFirst()
+        else if (option === 'BranchAndBound')
+            BranchAndBound()
         else
             HillClimbing()
     }
@@ -130,74 +143,78 @@ export default function Home() {
             <div className="App">
                 <div>
                     <h1 className='text-center'>8Puzzle</h1>
-                    <table className='board'>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <input
-                                        onChange={e => checkInput(e.target.value, 0)}
+                    <div style={{ display: 'flex' }}>
+                        <table className='board'>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <input
+                                            onChange={e => checkInput(e.target.value, 0)}
+                                            className='tile' type='number' maxLength='1'
+                                            value={[...row1][0]}
+                                        />
+                                    </td>
+                                    <td><input
+                                        onChange={e => checkInput(e.target.value, 1)}
                                         className='tile' type='number' maxLength='1'
-                                        value={[...row1][0]}
-                                    />
-                                </td>
-                                <td><input
-                                    onChange={e => checkInput(e.target.value, 1)}
-                                    className='tile' type='number' maxLength='1'
-                                    value={[...row1][1]}
-                                /></td>
-                                <td><input
-                                    onChange={e => checkInput(e.target.value, 2)}
-                                    className='tile' type='number'
-                                    value={[...row1][2]}
-                                /></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <input
-                                        onChange={e => checkInput(e.target.value, 3)}
+                                        value={[...row1][1]}
+                                    /></td>
+                                    <td><input
+                                        onChange={e => checkInput(e.target.value, 2)}
+                                        className='tile' type='number'
+                                        value={[...row1][2]}
+                                    /></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input
+                                            onChange={e => checkInput(e.target.value, 3)}
+                                            className='tile' type='number' maxLength='1'
+                                            value={[...row1][3]}
+                                        />
+                                    </td>
+                                    <td><input
+                                        onChange={e => checkInput(e.target.value, 4)}
                                         className='tile' type='number' maxLength='1'
-                                        value={[...row1][3]}
-                                    />
-                                </td>
-                                <td><input
-                                    onChange={e => checkInput(e.target.value, 4)}
-                                    className='tile' type='number' maxLength='1'
-                                    value={[...row1][4]}
-                                /></td>
-                                <td><input
-                                    onChange={e => checkInput(e.target.value, 5)}
-                                    className='tile' type='number'
-                                    value={[...row1][5]}
-                                /></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <input
-                                        onChange={e => checkInput(e.target.value, 6)}
+                                        value={[...row1][4]}
+                                    /></td>
+                                    <td><input
+                                        onChange={e => checkInput(e.target.value, 5)}
+                                        className='tile' type='number'
+                                        value={[...row1][5]}
+                                    /></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input
+                                            onChange={e => checkInput(e.target.value, 6)}
+                                            className='tile' type='number' maxLength='1'
+                                            value={[...row1][6]}
+                                        />
+                                    </td>
+                                    <td><input
+                                        onChange={e => checkInput(e.target.value, 7)}
                                         className='tile' type='number' maxLength='1'
-                                        value={[...row1][6]}
-                                    />
-                                </td>
-                                <td><input
-                                    onChange={e => checkInput(e.target.value, 7)}
-                                    className='tile' type='number' maxLength='1'
-                                    value={[...row1][7]}
-                                /></td>
-                                <td><input
-                                    onChange={e => checkInput(e.target.value, 8)}
-                                    className='tile' type='number'
-                                    value={[...row1][8]}
-                                /></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                        value={[...row1][7]}
+                                    /></td>
+                                    <td><input
+                                        onChange={e => checkInput(e.target.value, 8)}
+                                        className='tile' type='number'
+                                        value={[...row1][8]}
+                                    /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <select
                         onChange={e => setOption(e.target.value)}
                         name="algoritmo" id="agoritmo"
                         className='select'
                     >
                         <option value="A*">A*</option>
-                        <option value="HillClimbing">HillClimbing</option>
+                        <option value="BestFirst">Best First</option>
+                        <option value="BranchAndBound">Branch and Bound</option>
+                        <option value="HillClimbing">Hill Climbing</option>
                     </select>
                     {
                         option === "A*"
@@ -307,22 +324,24 @@ export default function Home() {
                         <Typography id="modal-modal-title" variant="h6" component="h2">
                             Relatório
                         </Typography>
-                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                            {
-                                report?.map((rel, key) => {
-                                    return (
-                                        <div key={key}>
-                                            {
-                                                rel.map((elem) => {
-                                                    return (
+                        {
+                            report?.map((rel, i) => {
+                                return (
+                                    <div key={i}>
+                                        {
+                                            rel.map((elem, j) => {
+                                                return (
+                                                    <div key={j}>
                                                         <p>{elem}</p>
-                                                    )
-                                                })}
-                                            <p>-----</p>
-                                        </div>
-                                    )
-                                })
-                            }
+                                                    </div>
+                                                )
+                                            })}
+                                        <p>-----</p>
+                                    </div>
+                                )
+                            })
+                        }
+                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                         </Typography>
                     </Box>
                 </Modal>
