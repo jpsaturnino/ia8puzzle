@@ -40,6 +40,12 @@ export default function Home() {
     const [fullTreeSolution, setfullTreeSolution] = useState(false);
     const [mode, setMode] = useState('normal');
     const [report, setReport] = useState([]);
+    const [finalReport, setFinalReport] = useState([
+        ["A*", 0, 0],
+        ["Best First", 0, 0],
+        ["Branch and Bound", 0, 0],
+        ["Hill Climbing", 0, 0],
+    ]);
 
     function gotoGraph() {
         window.scrollTo({ top: graphSection.current.scrollIntoView() })
@@ -71,13 +77,68 @@ export default function Home() {
         const vt = await api.get('/treesolution');
         setTreeSolution(vt.data);
         var arr = [...report]
+        if (algorithm === "AStar")
+            algorithm = "A*"
         arr.push([
             "Algoritmo: " + algorithm,
-            "Tempo execução: " + et.data + "ms",
+            "Tempo execução: " + et.data + " ms",
             "Tamanho do caminho total: " + pl.data,
             "Tamanho do caminho da solução:" + pls.data
         ])
+        FinalReport(algorithm, et.data)
         setReport(arr);
+    }
+    function FinalReport(algorithm, exectime) {
+        var smexec = 0;
+        var c = 0;
+        var arr = [];
+        if (algorithm === 'AStar') {
+            smexec = [...finalReport][0][1]
+            console.log([...finalReport][0][1]);
+            smexec += exectime;
+            c = [...finalReport][0][2]
+            console.log([...finalReport][0][2]);
+            c++;
+            arr = [];
+            arr.push(["A*", smexec, c])
+            arr.push([...finalReport][1])
+            arr.push([...finalReport][2])
+            arr.push([...finalReport][3])
+            setFinalReport(arr);
+        } else if (algorithm === 'Best First') {
+            smexec = [...finalReport][1][1]
+            smexec += exectime;
+            c = [...finalReport][1][2]
+            c++;
+            arr = [];
+            arr.push([...finalReport][0])
+            arr.push([algorithm, smexec, c])
+            arr.push([...finalReport][2])
+            arr.push([...finalReport][3])
+            setFinalReport(arr);
+        } else if (algorithm === 'Branch and Bound') {
+            smexec = [...finalReport][2][1]
+            smexec += exectime;
+            c = [...finalReport][2][2]
+            c++;
+            arr = [];
+            arr.push([...finalReport][0])
+            arr.push([...finalReport][1])
+            arr.push([algorithm, smexec, c])
+            arr.push([...finalReport][3])
+            setFinalReport(arr);
+        } else {
+            smexec = [...finalReport][3][1]
+            smexec += exectime;
+            c = [...finalReport][3][2]
+            c++;
+            arr = [];
+            arr.push([...finalReport][0])
+            arr.push([...finalReport][1])
+            arr.push([...finalReport][2])
+            arr.push([algorithm, smexec, c])
+            setFinalReport(arr);
+        }
     }
 
     async function AStar2() {
@@ -123,8 +184,12 @@ export default function Home() {
     }
 
     const [open, setOpen] = useState(false);
+    const [openHelp, setOpenHelp] = useState(false);
+
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+    const handleOpenHelp = () => setOpenHelp(true);
+    const handleCloseHelp = () => setOpenHelp(false);
 
     function checkInput(value, pos) {
         value = parseInt(value[1])
@@ -142,7 +207,10 @@ export default function Home() {
         <>
             <div className="App">
                 <div>
-                    <h1 className='text-center'>8Puzzle</h1>
+                    <div style={{ display: 'flex', justifyContent: "center", alignItems: "center" }}>
+                        <h1 className='text-center'>8Puzzle</h1>
+                        <button onClick={handleOpenHelp} style={{ marginLeft: '5px', height: '20px', paddingTop: '0px', paddingBottom: '0px', width: 'fit-content', margin: '0px', }}>?</button>
+                    </div>
                     <div style={{ display: 'flex' }}>
                         <table className='board'>
                             <tbody>
@@ -321,7 +389,25 @@ export default function Home() {
                     aria-describedby="modal-modal-description"
                 >
                     <Box sx={style}>
-                        <Typography id="modal-modal-title" variant="h6" component="h2">
+                        <Typography sx={{ color: '#7a66ec' }} id="modal-modal-title" variant="h6" component="h2">
+                            Relatório Geral
+                        </Typography>
+
+                        {
+                            finalReport?.map((al, i) => {
+                                return (
+                                    al[2] != 0
+                                        ?
+                                        <div key={i}>
+                                            <p>Algoritmo: {al[0]}</p>
+                                            <p>Tempo Médio de Execução: {(al[1] / al[2]).toFixed(2)} ms</p>
+                                            <p>-----</p>
+                                        </div>
+                                        : null
+                                )
+                            })
+                        }
+                        <Typography sx={{ mt: 4, color: '#7a66ec' }} id="modal-modal-title" variant="h6" component="h2">
                             Relatório
                         </Typography>
                         {
@@ -341,7 +427,47 @@ export default function Home() {
                                 )
                             })
                         }
-                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                    </Box>
+                </Modal>
+            </div>
+            <div>
+                <Modal
+                    open={openHelp}
+                    onClose={handleCloseHelp}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >
+                    <Box sx={style}>
+                        <Typography sx={{ color: '#7a66ec' }} id="modal-modal-title" variant="h6" component="h2">
+                            Sobre
+                        </Typography>
+                        <Typography id="modal-modal-description" variant="p" component="p">
+                            Esta aplicação permite a vizualização grafica, de diferentes algoritmos de busca informada
+                            utilizando:
+                        </Typography>
+                        <Typography sx={{ mt: 1 }} id="modal-modal-description" variant="p" component="p">
+                            - F.A (Função de Avaliação): a soma das distâncias manhattan de cada peça da matriz atual em relação ao estado final.
+                        </Typography>
+                        <Typography sx={{ mt: 1 }} id="modal-modal-description" variant="p" component="p">
+                            - F.C (Função de Custo): a soma das distâncias manhattan de cada peça da matriz atual em relação à matriz pai.
+                        </Typography>
+                        <Typography sx={{ mt: 3, color: '#7a66ec' }} id="modal-modal-title" variant="h6" component="h2">
+                            Instruções
+                        </Typography>
+                        <Typography id="modal-modal-description" variant="p" component="p">
+                            Você deve preencher a matriz com o estado final desejado.
+                        </Typography>
+                        <Typography sx={{ mt: 1 }} id="modal-modal-description" variant="p" component="p">
+                            Ao clicar em iniciar, serão realizadas suscessivas movimentações no estado final, a fim de determinar o estado inicial.
+                        </Typography>
+                        <Typography sx={{ mt: 1 }} id="modal-modal-description" variant="p" component="p">
+                            A partir disso é possível escolher entre vizualizar a árvore de desenvolvimento completa ou apenas a árvore do caminho solução.
+                        </Typography>
+                        <Typography sx={{ mt: 3, color: '#7a66ec' }} id="modal-modal-title" variant="h6" component="h2">
+                            Relatório
+                        </Typography>
+                        <Typography id="modal-modal-description" variant="p" component="p">
+                            Os relatórios são gerados em consequência das buscas executadas e podem ser vizualizados clicando em "Relatório" no canto superior direito à árvore.
                         </Typography>
                     </Box>
                 </Modal>
