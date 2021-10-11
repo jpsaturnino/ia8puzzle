@@ -1,54 +1,117 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import api from "../services/api"
-//import 'bootstrap/dist/css/bootstrap.min.css';
 import './style.css'
 import Tree from 'react-d3-tree';
 import './tree.css'
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Modal from '@mui/material/Modal';
+
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: '#111',
+    border: '2px solid #222',
+    boxShadow: 24,
+    p: 4,
+    height: 500,
+    overflow: 'scroll'
+};
 
 export default function Home() {
+    const graphSection = useRef(null);
     const [matEnd, setMatEnd] = useState([
         [0, 1, 2],
         [3, 4, 5],
         [6, 7, 8]
     ])
+
     const [option, setOption] = useState('A*');
-    const [orgChart, setOrgChart] = useState(null);
+    const [tree, setTree] = useState(null);
+    const [treeSolution, setTreeSolution] = useState(null);
     const [row1, setRow1] = useState([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    const [pathLen, setPathLen] = useState('-');
+    const [executionTime, setExcecutionTime] = useState('-');
+    const [visitedLen, setVisitedLen] = useState('-')
+    const [fullTree, setFullTree] = useState(false);
+    const [fullTreeSolution, setfullTreeSolution] = useState(false);
+    const [mode, setMode] = useState('normal');
+    const [report, setReport] = useState([]);
+
+    function gotoGraph() {
+        window.scrollTo({ top: graphSection.current.scrollIntoView() })
+    }
 
     function convertToMat(row) {
         var arr = [];
         arr.push(row.slice(0, 3))
         arr.push(row.slice(3, 6))
         arr.push(row.slice(6, 9))
-        console.log(arr);
         setMatEnd(arr)
     }
 
+    function selectAStarMode() {
+        if (mode === 'normal')
+            AStar();
+        else
+            AStar2();
+    }
+
+    async function setTreeInfo(resp, algorithm) {
+        setTree(resp);
+        const pl = await api.get('/pathlen');
+        setPathLen(pl.data);
+        const pls = await api.get('/pathlensolution');
+        setVisitedLen(pls.data);
+        const et = await api.get('/executiontime');
+        setExcecutionTime(et.data);
+        const vt = await api.get('/treesolution');
+        setTreeSolution(vt.data);
+        var arr = [...report]
+        arr.push([
+            "Algoritmo: " + algorithm,
+            "Tempo execução: " + et.data + "ms",
+            "Tamanho do caminho total: " + pl.data,
+            "Tamanho do caminho da solução:" + pls.data
+        ])
+        console.log(arr)
+        setReport(arr);
+    }
+
+    async function AStar2() {
+        const resp = await api.post('/astarjump', { matEnd });
+        setTreeInfo(resp.data, "AStar2");
+    }
+
     async function AStar() {
-        var n = 2
-        console.log(matEnd);
-        const resp = await api.post('/astar', { matEnd, n });
-        setOrgChart(resp.data);
+        const resp = await api.post('/astar', { matEnd });
+        setTreeInfo(resp.data, "AStar");
     }
 
     async function HillClimbing() {
         const resp = await api.post('/hillclimbing', { matEnd });
-        setOrgChart(resp.data);
+        setTreeInfo(resp.data, "HillClimbimg");
     }
 
     const handle = () => {
         if (option === 'A*')
-            AStar()
+            selectAStarMode();
         else
             HillClimbing()
     }
-
 
     function findIndex(elem) {
         for (var i in row1)
             if ([...row1][i] === elem)
                 return i
     }
+
+    const [open, setOpen] = useState(false);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
 
     function checkInput(value, pos) {
         value = parseInt(value[1])
@@ -136,31 +199,134 @@ export default function Home() {
                         <option value="A*">A*</option>
                         <option value="HillClimbing">HillClimbing</option>
                     </select>
-                    <button className="btn-primary" onClick={handle}>Iniciar</button>
-
+                    {
+                        option === "A*"
+                            ? <>
+                                <div className='input-radio'>
+                                    <input checked type="radio"
+                                        name="A*Mode" id="normal-mode"
+                                        onChange={() => setMode('normal')}
+                                    />
+                                    <label htmlFor="normal-mode">Normal</label>
+                                    <input type="radio" name="A*Mode"
+                                        id="burst-mode" value="Enabled"
+                                        onChange={() => setMode('burst')}
+                                    />
+                                    <label htmlFor="burst-mode">Modo Curioso</label>
+                                </div>
+                            </>
+                            : null
+                    }
+                    <button onClick={handle}>Iniciar</button>
                 </div>
-            </div>
+                {
+                    tree !== null
+                        ?
+                        <>
+                            <div style={{ width: 'auto', display: 'flex', justifyContent: 'space-between' }}>
+                                <button style={{ width: '45%' }}
+                                    onClick={() => {
+                                        setFullTree(true);
+                                        setfullTreeSolution(false);
+                                        gotoGraph();
+                                    }}>
+                                    Mostrar Árvore Completa
+                                </button>
+                                <button style={{ width: '45%' }}
+                                    onClick={() => {
+                                        setfullTreeSolution(true);
+                                        setFullTree(false);
+                                        gotoGraph();
+                                    }}>Mostrar Árvore da Solução
+                                </button>
+                            </div>
 
-            {
-                orgChart !== null
-                    ? <>
-                        <h1 className='text-center'>Arvore Gerada</h1>
+                        </>
+                        : null
+                }
+
+            </div>
+            <div ref={graphSection}>
+                {tree != null
+                    ?
+                    <>
                         <div className='table-info'>
-                            <p>Tempo: </p>
-                            <p>Nós visitados: </p>
-                            <p>Tamanho do caminho da solução: </p>
+                            <p><b>Tempo:</b> {executionTime}ms</p>
+                            <p><b>Tamanho do caminho da solução:</b> {visitedLen}</p>
+                            <p><b>Nós visitados:</b> {pathLen}</p>
+                            <button onClick={handleOpen}>Relatório</button>
                         </div>
-                        <div id="treeWrapper" style={{ width: '100%', height: '25em' }}>
-                            <Tree
-                                data={orgChart}
-                                orientation='vertical' pathFunc='straight'
-                                rootNodeClassName="node__root"
-                                branchNodeClassName="node__branch"
-                                leafNodeClassName="node__leaf"
-                            />
-                        </div>
-                    </> : null
-            }
+                    </>
+                    : null
+                }
+                {
+                    fullTree && tree != null
+                        ? <>
+                            <h1 className='text-center'>Árvore Completa</h1>
+                            <div className='center'>
+                                <div id="treeWrapper" style={{ margin: '30px 0px 30px 0px', width: '90%', height: '32em', border: '2px solid #7a66ec' }}>
+                                    <Tree
+                                        data={tree}
+                                        orientation='vertical' pathFunc='straight'
+                                        rootNodeClassName="node__root"
+                                        branchNodeClassName="node__branch"
+                                        leafNodeClassName="node__leaf"
+                                    />
+                                </div>
+                            </div>
+                        </> :
+                        null
+                }
+                {
+                    fullTreeSolution && treeSolution != null
+                        ? <>
+                            <h1 className='text-center'>Árvore da Solução</h1>
+                            <div className='center'>
+                                <div id="treeWrapper" style={{ margin: '0px 10px 0px 10px', width: '90%', height: '32em', border: '2px solid #7a66ec' }}>
+                                    <Tree
+                                        data={treeSolution}
+                                        orientation='vertical' pathFunc='straight'
+                                        rootNodeClassName="node__root"
+                                        branchNodeClassName="node__branch"
+                                        leafNodeClassName="node__leaf"
+                                    />
+                                </div>
+                            </div>
+                        </>
+                        : null
+                }
+            </div>
+            <div>
+                <Modal
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >
+                    <Box sx={style}>
+                        <Typography id="modal-modal-title" variant="h6" component="h2">
+                            Relatório
+                        </Typography>
+                        <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                            {
+                                report?.map((rel, key) => {
+                                    return (
+                                        <div key={key}>
+                                            {
+                                                rel.map((elem) => {
+                                                    return (
+                                                        <p>{elem}</p>
+                                                    )
+                                                })}
+                                            <p>-----</p>
+                                        </div>
+                                    )
+                                })
+                            }
+                        </Typography>
+                    </Box>
+                </Modal>
+            </div>
         </>
     );
 }

@@ -5,6 +5,7 @@ class Node {
     this.fa = 0
     this.fc = 0
     this.father = null
+    this.state = "comum"
   }
 
   getFather() {
@@ -51,6 +52,13 @@ class Node {
 
   setChild(child) {
     this.child = child;
+  }
+  getState() {
+    return this.state;
+  }
+
+  setState(state) {
+    this.state = state;
   }
 }
 

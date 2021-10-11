@@ -7,6 +7,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   background: #111;
+  scroll-behavior: smooth;
   color: white;
 }
 input::-webkit-outer-spin-button,
@@ -19,7 +20,11 @@ input[type=number] {
   -moz-appearance: textfield;
 
 }
-
+.input-radio {
+  padding: 10px 0 10px 0;
+  font-size: small;
+  font-weight: bold;
+}
 select {
   color: #efefef;
   margin-top: 30px;
@@ -47,6 +52,7 @@ select:hover {
 }
 h1 {
   margin: 0;
+  margin-bottom: 10px;
 }
 .text-center{
   text-align: center;
@@ -94,8 +100,10 @@ table{
 
 .table-info {
   width: fit-content;
+  position: absolute;
+  left: 75vw;
+  top: 115vh;
   padding: 10px;
-  margin: 10px;
   background-color: rgba(31, 31, 31, 0.685);
   border-radius: 4px;
 }
@@ -103,5 +111,10 @@ table{
 p {
   margin: 1px;
   font-size: small;
-  font-weight: bold;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
 }

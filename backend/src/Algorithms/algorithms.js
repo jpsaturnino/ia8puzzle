@@ -1,23 +1,29 @@
 const Node = require('../Classes/Node');
 var str = '{';
-
+var root
+var path = [];
+var executionTime = 0;
+var lenPathSolution = 0
 
 module.exports = {
     async AStar(request, response) {
-        const { matEnd, n } = request.body;
+        path = []
+        const { matEnd } = request.body;
 
         var matTemp;
         var xy, nb, posRoot;
         var arrayLeaf = [], arrayAux;
-        var root
-        var path = [];
+
         const matStart = shuffle(copyMat(matEnd));
         root = new Node(matStart);
         var root_ = root;
         root.setFa(sumManhattan(root.getData(), matEnd));
         root.setFc(0);
+        root.setState('visitado')
+
         path.push(root);
         arrayLeaf.push(root);
+        executionTime = Date.now();
         while (!equalsMat(root.getData(), matEnd)) {
             xy = posEmpty(root.getData());
             nb = neighbors(xy[0], xy[1]);
@@ -53,32 +59,77 @@ module.exports = {
                 }
                 //filho selecionado
                 root = arrayLeaf[pos];
+                root.setState('visitado')
                 path.push(root);
             }
         }
-        //
+        executionTime = Date.now() - executionTime;
+        nodesSolution(root)
+        root = root_;
         str = "{"
         convertToGraph(root_)
         str = str + "}"
         response.send(str)
     },
+    async getExecutionTime(request, response) {
+        return response.json(executionTime);
+    },
+    async pathLen(request, response) {
+        path = path.filter((este, i) => path.indexOf(este) === i);
+        var len = path.length
+        return response.json(len)
+    },
+    async pathLenSolution(request, response) {
+        return response.json(lenPathSolution)
+    },
+
+    async treeSolution(request, response) {
+        var queue = [];
+        var trash;
+        if (root != null) {
+            var aux = root;
+            queue.push(aux);
+            while (queue.length > 0) {
+                aux = queue.shift();
+                trash = [];
+                for (let i = 0; i < aux.getChild().length; i++) {
+                    if (aux.getChild()[i].getState() == "solucao")
+                        queue.push(aux.getChild()[i]);
+                    else
+                        trash.push(aux.getChild()[i]);
+                }
+                for (let k of trash) {
+                    ii = aux.getChild().indexOf(k)
+                    aux.getChild().splice(ii, 1);
+                }
+            }
+            str = "{"
+            convertToGraph(root)
+            str = str + "}"
+        }
+        else {
+            console.log("root null")
+        }
+        response.send(str)
+
+    },
 
     async AStar_Jump(request, response) {
-        const { matEnd, n } = request.body;
+        const { matEnd } = request.body;
         var path = [];
         var matTemp;
-        var xy, nb, root, posRoot;
+        var xy, nb, posRoot;
         var arrayLeaf = [];
-
-        const matStart = shuffle(copyMat(matEnd));
-        //matStart = [[1, 2, 3], [4, 7, 0], [6, 8, 5]]
+        //const matStart = shuffle(copyMat(matEnd));
+        const matStart = [[1, 0, 2], [3, 4, 5], [6, 7, 8]]
         root = new Node(matStart);
         var root_ = root;
         root.setFa(sumManhattan(root.getData(), matEnd));
         root.setFc(0);
+        root.setState('visitado')
         path.push(root);
         arrayLeaf.push(root);
-        var it = 0
+        executionTime = Date.now();
         while (!equalsMat(root.getData(), matEnd)) {
             var arrayAux = []
             //definir os possiveis estados seguintes para todas as folhas
@@ -103,7 +154,7 @@ module.exports = {
             arrayAux = []
             for (let i = 0; i < arrayLeaf.length; i++)
                 findChild(arrayLeaf[i], matEnd, arrayAux)
-            arrayLeaf = arrayAux
+            araryLeaf = arrayAux
             //selecionar filho de menor custo
             let k;
             var pos, cost, lowestCost;
@@ -122,25 +173,32 @@ module.exports = {
                     root = arrayLeaf[pos]
                 else
                     root = arrayLeaf[pos].getFather();
+                root.setState('visitado')
                 path.push(root);
             }
-            it++
         }
-        show(root_);
-        return response.json(root_)
+        executionTime = Date.now() - executionTime;
+        nodesSolution(root)
+        root = root_
+        str = "{"
+        convertToGraph(root)
+        str = str + "}"
+        response.send(str)
     },
 
     async hillClimbing(request, response) {
+        path = []
         const { matEnd } = request.body
         const matStart = shuffle(copyMat(matEnd));
-        var root = new Node(matStart);
+        root = new Node(matStart);
         var root_ = root
         var xy, nb, matTemp;
         var done = false;
-        var path = [];
 
         root.setFa(sumManhattan(root.getData(), matEnd))
+        root.setState('visitado')
         path.push(root);
+        executionTime = Date.now();
         while (!done && !equalsMat(root.getData(), matEnd)) {
             xy = posEmpty(root.getData());
             nb = neighbors(xy[0], xy[1]);
@@ -150,6 +208,7 @@ module.exports = {
                 matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]]
                 matTemp.getData()[nb[i]][nb[i + 1]] = 0
                 matTemp.setFa(sumManhattan(matTemp.getData(), matEnd))
+                matTemp.setFather(root)
                 root.getChild().push(matTemp)
             }
             let k
@@ -167,6 +226,7 @@ module.exports = {
                 //filho selecionado
                 if (root.getChild()[pos].getFa() < root.getFa()) {
                     root = root.getChild()[pos]
+                    root.setState('visitado')
                     path.push(root)
                 }
                 else {
@@ -177,6 +237,72 @@ module.exports = {
             else
                 done = true
         }
+        executionTime = Date.now() - executionTime;
+        nodesSolution(root)
+        root = root_
+        str = "{"
+        convertToGraph(root)
+        str = str + "}"
+        response.send(str)
+    },
+    async best_first(request, response) {
+        path = []
+        const { matEnd } = request.body;
+
+        var matTemp;
+        var xy, nb, posRoot;
+        var arrayLeaf = [], arrayAux;
+
+        const matStart = shuffle(copyMat(matEnd));
+        root = new Node(matStart);
+        var root_ = root;
+        root.setFa(sumManhattan(root.getData(), matEnd));
+        root.setState('visitado')
+
+        path.push(root);
+        arrayLeaf.push(root);
+        executionTime = Date.now();
+        while (!equalsMat(root.getData(), matEnd)) {
+            xy = posEmpty(root.getData());
+            nb = neighbors(xy[0], xy[1]);
+            //definir os possiveis estados seguintes 
+            for (let i = 0; i < nb.length; i += 2) {
+                matTemp = new Node(copyMat(root.getData()));
+                matTemp.getData()[xy[0]][xy[1]] = matTemp.getData()[nb[i]][nb[i + 1]];
+                matTemp.getData()[nb[i]][nb[i + 1]] = 0;
+                matTemp.setFa(sumManhattan(matTemp.getData(), matEnd));
+                matTemp.setFather(root)
+                root.getChild().push(matTemp);
+                arrayLeaf.push(matTemp);
+            }
+            if (nb.length > 0) {
+                //remover root da lista de folhas
+                posRoot = arrayLeaf.indexOf(root);
+                //remove 1 elemento a partir do índice posRoot
+                arrayLeaf.splice(posRoot, 1);
+            }
+            //selecionar filho de menor custo
+            let k;
+            var pos, cost, lowestCost;
+            if (arrayLeaf.length > 0) {
+                lowestCost = arrayLeaf[0].getFa()
+                pos = 0;
+                for (k = 1; k < arrayLeaf.length; k++) {
+                    cost = arrayLeaf[k].getFa()
+                    if (cost < lowestCost) {
+                        lowestCost = cost;
+                        pos = k;
+                    }
+                }
+                //filho selecionado
+                root = arrayLeaf[pos];
+                root.setState('visitado')
+                path.push(root);
+            }
+        }
+        executionTime = Date.now() - executionTime;
+        nodesSolution(root)
+        root = root_;
         str = "{"
         convertToGraph(root_)
         str = str + "}"
@@ -190,26 +316,23 @@ function show(root) {
         queue.push(aux);
         while (queue.length > 0) {
             aux = queue.shift();
-            console.log("pai");
-            console.log(aux.getData());
-            console.log("filhos:");
             for (let i of aux.getChild()) {
-                console.log(i.getData());
                 queue.push(i);
             }
-            console.log("--");
         }
     }
 }
 
 function convertToGraph(root) {
     if (root != null) {
+
         str = str + "\"attributes\":{" +
-            "\"Row 1\": \"" + root.getData()[0] + "\"," +
-            "\"Row 2\": \"" + root.getData()[1] + "\"," +
-            "\"Row 3\": \"" + root.getData()[2] + "\"," +
+            "\"Linha 1\": \"" + root.getData()[0] + "\"," +
+            "\"Linha 2\": \"" + root.getData()[1] + "\"," +
+            "\"Linha 3\": \"" + root.getData()[2] + "\"," +
             "\"F.A.\": \"" + root.getFa() + "\"," +
-            "\"F.C.\": \"" + root.getFc() + "\""
+            "\"F.C.\": \"" + root.getFc() + "\"," +
+            "\"Estado\": \"" + root.getState() + "\""
             + "}"
         if (root.getChild().length > 0) {
             str = str + ",\"children\":["
@@ -239,6 +362,19 @@ function copyVet(vet) {
     for (let i = 0; i < vet.length; i++)
         vetCopy[i] = vet[i]
     return vetCopy
+}
+
+function nodesSolution(root) {
+    var aux = root
+    //pathSolution = [][]
+
+    lenPathSolution = 0
+    while (aux != null) {
+        //pathSolution.unshift(aux)
+        aux.setState('solucao')
+        lenPathSolution += 1
+        aux = aux.getFather()
+    }
 }
 
 function copyMat(mat) {
@@ -317,7 +453,7 @@ function findChild(matrix, matEnd, arrayAux) {
     }
 }
 function shuffle(matrix) {
-    const min = 10, max = 20;
+    const min = 3, max = 8;
     var rand = parseInt(min + Math.random() * (max - min));
     var x, y; //coordenas da posição livre
     var found = false
