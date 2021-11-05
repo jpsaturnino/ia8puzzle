@@ -5,7 +5,7 @@
 - ReactJS
 - NodeJS
 
-## Contributors
+## Contributor
 
 <table>
   <tr>
