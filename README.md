@@ -1,5 +1,7 @@
 # 8Puzzle solved with Heuristic Search Algorithms
 
+Link: https://ia8puzzle.vercel.app
+
 ## Technologies
 
 - ReactJS
