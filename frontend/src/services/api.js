@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3344'
+  //http://localhost:3344
+  baseURL: 'https://ia8puzzle-server.herokuapp.com'
 });
 
 export default api;
